@@ -117,45 +117,401 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/models/Eventing.ts":[function(require,module,exports) {
+})({"src/views/View.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Eventing = void 0;
+exports.View = void 0;
 
-var Eventing =
+var View =
 /** @class */
 function () {
-  function Eventing() {
+  function View(parent, model) {
     var _this = this;
 
-    this.events = {};
+    this.parent = parent;
+    this.model = model;
+    this.regions = {};
 
-    this.on = function (eventName, callback) {
-      var handlers = _this.events[eventName] || [];
-      handlers.push(callback);
-      _this.events[eventName] = handlers;
+    this.regionsMap = function () {
+      return {};
     };
 
-    this.trigger = function (eventName) {
-      var handlers = _this.events[eventName];
+    this.eventsMap = function () {
+      return {};
+    };
 
-      if (!handlers || handlers.length === 0) {
-        return;
+    this.bindModel = function () {
+      _this.model.on('change', function () {
+        _this.render();
+      });
+    };
+
+    this.bindEvents = function (fragment) {
+      var eventsMap = _this.eventsMap();
+
+      var _loop_1 = function _loop_1(eventKey) {
+        var _a = eventKey.split(':'),
+            eventName = _a[0],
+            selector = _a[1];
+
+        fragment.querySelectorAll(selector).forEach(function (el) {
+          el.addEventListener(eventName, eventsMap[eventKey]);
+        });
+      };
+
+      for (var eventKey in eventsMap) {
+        _loop_1(eventKey);
+      }
+    };
+
+    this.mapRegions = function (fragment) {
+      var regionsMap = _this.regionsMap();
+
+      for (var key in regionsMap) {
+        var selector = regionsMap[key];
+        var element = fragment.querySelector(selector);
+        if (element) _this.regions[key] = element;
+      }
+    };
+
+    this.onRender = function () {};
+
+    this.bindModel();
+  }
+
+  View.prototype.render = function () {
+    this.parent.innerHTML = '';
+    var templateElement = document.createElement('template');
+    templateElement.innerHTML = this.template();
+    this.bindEvents(templateElement.content);
+    this.mapRegions(templateElement.content);
+    this.onRender();
+    this.parent.append(templateElement.content);
+  };
+
+  return View;
+}();
+
+exports.View = View;
+},{}],"src/views/UserForm.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UserForm = void 0;
+
+var View_1 = require("./View");
+
+var UserForm =
+/** @class */
+function (_super) {
+  __extends(UserForm, _super);
+
+  function UserForm() {
+    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+    _this.eventsMap = function () {
+      return {
+        'click:.set-age': _this.onSetAgeClick,
+        'click:.set-name': _this.onSetNameClick,
+        'click:.save-model': _this.onSaveClick
+      };
+    };
+
+    _this.onSaveClick = function () {
+      _this.model.save();
+    };
+
+    _this.onSetAgeClick = function () {
+      _this.model.setRandomAge();
+    };
+
+    _this.onSetNameClick = function () {
+      var input = _this.parent.querySelector('input');
+
+      if (input) {
+        var name = input.value;
+
+        _this.model.set({
+          name: name
+        });
+      }
+    };
+
+    return _this;
+  }
+
+  UserForm.prototype.template = function () {
+    return "\n            <div>\n                <input placeholder='" + this.model.get('name') + "'/>\n                <button class='set-name'>Update name</button>\n                <button class='set-age'>Set Random age</button>\n                <button class='save-model'>Save!</button>\n            </div>\n        ";
+  };
+
+  return UserForm;
+}(View_1.View);
+
+exports.UserForm = UserForm;
+},{"./View":"src/views/View.ts"}],"src/views/UserShow.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UserShow = void 0;
+
+var View_1 = require("./View");
+
+var UserShow =
+/** @class */
+function (_super) {
+  __extends(UserShow, _super);
+
+  function UserShow() {
+    return _super !== null && _super.apply(this, arguments) || this;
+  }
+
+  UserShow.prototype.template = function () {
+    return "\n            <div>\n                <h1>User Detail</h1>\n                <div>User name: " + this.model.get('name') + "</div>\n                <div>User age: " + this.model.get('age') + "</div>\n            </div>\n        ";
+  };
+
+  return UserShow;
+}(View_1.View);
+
+exports.UserShow = UserShow;
+},{"./View":"src/views/View.ts"}],"src/views/UserEdit.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UserEdit = void 0;
+
+var View_1 = require("./View");
+
+var UserForm_1 = require("./UserForm");
+
+var UserShow_1 = require("./UserShow");
+
+var UserEdit =
+/** @class */
+function (_super) {
+  __extends(UserEdit, _super);
+
+  function UserEdit() {
+    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+    _this.regionsMap = function () {
+      return {
+        userShow: '.user-show',
+        userForm: '.user-form'
+      };
+    };
+
+    _this.onRender = function () {
+      new UserShow_1.UserShow(_this.regions.userShow, _this.model).render();
+      new UserForm_1.UserForm(_this.regions.userForm, _this.model).render();
+    };
+
+    _this.template = function () {
+      return "\n            <div>\n                <div class='user-show'></div>\n                <div class='user-form'></div>\n            </div>\n        ";
+    };
+
+    return _this;
+  }
+
+  return UserEdit;
+}(View_1.View);
+
+exports.UserEdit = UserEdit;
+},{"./View":"src/views/View.ts","./UserForm":"src/views/UserForm.ts","./UserShow":"src/views/UserShow.ts"}],"src/models/Model.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Model = void 0;
+
+var Model =
+/** @class */
+function () {
+  function Model(attributes, events, sync) {
+    var _this = this;
+
+    this.attributes = attributes;
+    this.events = events;
+    this.sync = sync;
+
+    this.set = function (update) {
+      _this.attributes.set(update);
+
+      _this.events.trigger('change');
+    };
+
+    this.fetch = function () {
+      var id = _this.get('id');
+
+      if (typeof id !== 'number') {
+        throw new Error('Cannot fetch without id');
       }
 
-      handlers.forEach(function (callback) {
-        callback();
+      _this.sync.fetch(id).then(function (res) {
+        _this.set(res.data);
+      });
+    };
+
+    this.save = function () {
+      _this.sync.save(_this.attributes.getAll()).then(function (res) {
+        _this.trigger('save');
+      }).catch(function () {
+        _this.trigger('error');
       });
     };
   }
 
-  return Eventing;
+  Object.defineProperty(Model.prototype, "on", {
+    get: function get() {
+      return this.events.on;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Model.prototype, "trigger", {
+    get: function get() {
+      return this.events.trigger;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Model.prototype, "get", {
+    get: function get() {
+      return this.attributes.get;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  return Model;
 }();
 
-exports.Eventing = Eventing;
+exports.Model = Model;
+},{}],"src/models/Attributes.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Attributes = void 0;
+
+var Attributes =
+/** @class */
+function () {
+  function Attributes(data) {
+    var _this = this;
+
+    this.data = data;
+
+    this.get = function (key) {
+      return _this.data[key];
+    };
+
+    this.set = function (update) {
+      Object.assign(_this.data, update);
+    };
+
+    this.getAll = function () {
+      return _this.data;
+    };
+  }
+
+  return Attributes;
+}();
+
+exports.Attributes = Attributes;
 },{}],"../node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
 'use strict';
 
@@ -1956,7 +2312,7 @@ module.exports.default = axios;
 
 },{"./utils":"../node_modules/axios/lib/utils.js","./helpers/bind":"../node_modules/axios/lib/helpers/bind.js","./core/Axios":"../node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"../node_modules/axios/lib/core/mergeConfig.js","./defaults":"../node_modules/axios/lib/defaults.js","./cancel/Cancel":"../node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"../node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"../node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"../node_modules/axios/lib/helpers/spread.js","./helpers/isAxiosError":"../node_modules/axios/lib/helpers/isAxiosError.js"}],"../node_modules/axios/index.js":[function(require,module,exports) {
 module.exports = require('./lib/axios');
-},{"./lib/axios":"../node_modules/axios/lib/axios.js"}],"src/models/Sync.ts":[function(require,module,exports) {
+},{"./lib/axios":"../node_modules/axios/lib/axios.js"}],"src/models/APISync.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -1968,14 +2324,14 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Sync = void 0;
+exports.APISync = void 0;
 
 var axios_1 = __importDefault(require("axios"));
 
-var Sync =
+var APISync =
 /** @class */
 function () {
-  function Sync(rootUrl) {
+  function APISync(rootUrl) {
     var _this = this;
 
     this.rootUrl = rootUrl;
@@ -1997,88 +2353,213 @@ function () {
     };
   }
 
-  return Sync;
+  return APISync;
 }();
 
-exports.Sync = Sync;
-},{"axios":"../node_modules/axios/index.js"}],"src/models/Attributes.ts":[function(require,module,exports) {
+exports.APISync = APISync;
+},{"axios":"../node_modules/axios/index.js"}],"src/models/Eventing.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Attributes = void 0;
+exports.Eventing = void 0;
 
-var Attributes =
+var Eventing =
 /** @class */
 function () {
-  function Attributes(data) {
+  function Eventing() {
     var _this = this;
 
-    this.data = data;
+    this.events = {};
 
-    this.get = function (key) {
-      return _this.data[key];
+    this.on = function (eventName, callback) {
+      var handlers = _this.events[eventName] || [];
+      handlers.push(callback);
+      _this.events[eventName] = handlers;
     };
 
-    this.set = function (update) {
-      Object.assign(_this.data, update);
-    };
+    this.trigger = function (eventName) {
+      var handlers = _this.events[eventName];
 
-    this.getAll = function () {
-      return _this.data;
+      if (!handlers || handlers.length === 0) {
+        return;
+      }
+
+      handlers.forEach(function (callback) {
+        callback();
+      });
     };
   }
 
-  return Attributes;
+  return Eventing;
 }();
 
-exports.Attributes = Attributes;
-},{}],"src/models/User.ts":[function(require,module,exports) {
+exports.Eventing = Eventing;
+},{}],"src/models/Collection.ts":[function(require,module,exports) {
 "use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Collection = void 0;
+
+var axios_1 = __importDefault(require("axios"));
+
+var Eventing_1 = require("./Eventing");
+
+var Collection =
+/** @class */
+function () {
+  function Collection(rootUrl, deserialize) {
+    var _this = this;
+
+    this.rootUrl = rootUrl;
+    this.deserialize = deserialize;
+    this.models = [];
+    this.events = new Eventing_1.Eventing();
+
+    this.fetch = function () {
+      axios_1.default.get(_this.rootUrl).then(function (res) {
+        res.data.forEach(function (el) {
+          _this.models.push(_this.deserialize(el));
+        });
+      });
+
+      _this.trigger('change');
+    };
+  }
+
+  Object.defineProperty(Collection.prototype, "on", {
+    get: function get() {
+      return this.events.on;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Collection.prototype, "trigger", {
+    get: function get() {
+      return this.events.trigger;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  return Collection;
+}();
+
+exports.Collection = Collection;
+},{"axios":"../node_modules/axios/index.js","./Eventing":"src/models/Eventing.ts"}],"src/models/User.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.User = void 0;
 
-var Eventing_1 = require("./Eventing");
-
-var Sync_1 = require("./Sync");
+var Model_1 = require("./Model");
 
 var Attributes_1 = require("./Attributes");
 
+var APISync_1 = require("./APISync");
+
+var Eventing_1 = require("./Eventing");
+
+var Collection_1 = require("./Collection");
+
+var rootUrl = 'http://localhost:3000/users';
+
 var User =
 /** @class */
-function () {
-  function User(attrs) {
-    this.events = new Eventing_1.Eventing();
-    this.sync = new Sync_1.Sync('http://localhost:3000/users');
-    this.attributes = new Attributes_1.Attributes(attrs);
+function (_super) {
+  __extends(User, _super);
+
+  function User() {
+    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+    _this.setRandomAge = function () {
+      var age = Math.round(Math.random() * 100);
+
+      _this.set({
+        age: age
+      });
+    };
+
+    return _this;
   }
 
+  User.buildUser = function (attrs) {
+    return new User(new Attributes_1.Attributes(attrs), new Eventing_1.Eventing(), new APISync_1.APISync(rootUrl));
+  };
+
+  User.buildUserCollection = function () {
+    return new Collection_1.Collection(rootUrl, function (json) {
+      return User.buildUser(json);
+    });
+  };
+
   return User;
-}();
+}(Model_1.Model);
 
 exports.User = User;
-},{"./Eventing":"src/models/Eventing.ts","./Sync":"src/models/Sync.ts","./Attributes":"src/models/Attributes.ts"}],"src/index.ts":[function(require,module,exports) {
+},{"./Model":"src/models/Model.ts","./Attributes":"src/models/Attributes.ts","./APISync":"src/models/APISync.ts","./Eventing":"src/models/Eventing.ts","./Collection":"src/models/Collection.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var UserEdit_1 = require("./views/UserEdit");
+
 var User_1 = require("./models/User");
 
-var user = new User_1.User({
-  id: 1,
-  name: 'Ete sech',
-  age: 0
-}); // user.on('save', () => {
-//    console.log(user); 
-// });
-// user.save();
-},{"./models/User":"src/models/User.ts"}],"../../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+var user = User_1.User.buildUser({
+  name: 'NAME',
+  age: 20
+});
+var root = document.getElementById('root');
+
+if (root) {
+  var userEdit = new UserEdit_1.UserEdit(root, user);
+  userEdit.render();
+  console.log(userEdit);
+} else {
+  throw new Error('Root element not found');
+}
+},{"./views/UserEdit":"src/views/UserEdit.ts","./models/User":"src/models/User.ts"}],"../../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -2106,7 +2587,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49654" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54162" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
